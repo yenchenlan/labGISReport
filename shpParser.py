@@ -3,6 +3,7 @@ import findReadibleShps
 import shapefile
 import json
 import os
+from area import area
 
 def getRealKey( dictKeys, targetKeys ):
     for k in dictKeys:
@@ -43,6 +44,7 @@ def parseSFWithKey( sf, phrase, word, loc, fileName ):
 
     # make dict of dict
     annotation_dict = {}
+    areaArray=[]
     phraseIndex = -1
     currentPhrase = ''
 
@@ -72,10 +74,34 @@ def parseSFWithKey( sf, phrase, word, loc, fileName ):
         currentShape = shapes[i["oid"]]
         coord = currentShape.points
 
-        # shape =
+
+        # calculate area size and append to the areaArray
+        obj = {'type':'Polygon','coordinates':[coord]}
+        areaSize = area(obj)
+        areaArray.append( areaSize )
+
+
 
         # make the dictionary
-        annotation_dict[phraseIndex][wordLoc] = {'text_label': i[word], 'shape': coord }
+        annotation_dict[phraseIndex][wordLoc] = {'phrase': currentPhrase, 'text_label': i[word], 'shape': coord, 'area': areaSize }
+
+    FirstNItems = 20
+
+    # sort the area size and determine the boundary
+    sortedAreaArray = sorted(areaArray, reverse=True)
+    print( "sortedAreaArray[", FirstNItems, "] =", sortedAreaArray[FirstNItems] )
+
+    # print FirstNItems word that has largest area size
+    print()
+    print( "word with area larger than", sortedAreaArray[FirstNItems], ":" )
+    for i in annotation_dict:
+        for j in annotation_dict[i]:
+            item = annotation_dict[i][j]
+            if item['area'] >= sortedAreaArray[FirstNItems]:
+                #print( i, ":", item )
+                print( i, ":", item['phrase'], item['area'] )
+    print()
+
        
     # make into json file
     with open( "output/" + fileName + ".json", "w" ) as f:
@@ -144,6 +170,10 @@ def main():
 
         # getting the basename of the file to name json file
         fileName = os.path.basename(sf.shapeName)
+
+        if fileName != "USGS-15-CA-sanfrancisco-e1899-s1892-rp1911": 
+            print( "skip ", fileName )
+            continue
 
         print()
         print( "parsing", fileName )
