@@ -44,7 +44,7 @@ def parseSFWithKey( sf, phrase, word, loc, fileName ):
 
     # make dict of dict
     annotation_dict = {}
-    areaArray=[]
+    areaArray={}
     phraseIndex = -1
     currentPhrase = ''
 
@@ -77,29 +77,29 @@ def parseSFWithKey( sf, phrase, word, loc, fileName ):
 
         # calculate area size and append to the areaArray
         obj = {'type':'Polygon','coordinates':[coord]}
-        areaSize = area(obj)
-        areaArray.append( areaSize )
+        areaPerChar = int( area(obj) / len(i[word]) )
+        areaArray[ areaPerChar ] = {'phrase': currentPhrase, 'text_label': i[word], 'area': areaPerChar } 
 
 
 
         # make the dictionary
-        annotation_dict[phraseIndex][wordLoc] = {'phrase': currentPhrase, 'text_label': i[word], 'shape': coord, 'area': areaSize }
+        annotation_dict[phraseIndex][wordLoc] = {'phrase': currentPhrase, 'text_label': i[word], 'shape': coord, 'areaPerChar': areaPerChar }
 
-    FirstNItems = 20
 
     # sort the area size and determine the boundary
-    sortedAreaArray = sorted(areaArray, reverse=True)
-    print( "sortedAreaArray[", FirstNItems, "] =", sortedAreaArray[FirstNItems] )
+    sortedAreaKeys = sorted(areaArray, reverse=True)
 
     # print FirstNItems word that has largest area size
-    print()
-    print( "word with area larger than", sortedAreaArray[FirstNItems], ":" )
-    for i in annotation_dict:
-        for j in annotation_dict[i]:
-            item = annotation_dict[i][j]
-            if item['area'] >= sortedAreaArray[FirstNItems]:
-                #print( i, ":", item )
-                print( i, ":", item['phrase'], item['area'] )
+    ShowFirstNItems = 5
+    print( "===============" )
+    print( "First", ShowFirstNItems, "record with largest area per character:" )
+    index = 0 
+    for key in sortedAreaKeys:
+        print( areaArray[key] )
+        index += 1
+        if index > ShowFirstNItems: 
+            break
+    print( "===============" )
     print()
 
        
